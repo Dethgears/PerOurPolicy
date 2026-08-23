@@ -1,7 +1,10 @@
 using Menu;
 using Player.Input;
+using Unity.VisualScripting;
+using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.LowLevelPhysics2D;
 using UnityEngine.SceneManagement;
 
 namespace Player
@@ -16,7 +19,7 @@ namespace Player
         [Range(0f, 90f)][SerializeField] float yRotationLimit = 88f;
         
         [Header("Movement")]
-        [SerializeField] private float moveSpeed = 5f;
+        [SerializeField] public float moveSpeed = 5f;
         [SerializeField] private float jumpHeight = 1f;
         [SerializeField] private float airControl = 1f;
         
@@ -35,9 +38,15 @@ namespace Player
         private Vector2 rotation = Vector2.zero;
         private float verticalVelocity;
         private Vector3 horizontalVelocity;
+        
+        private Vector3 _carryOffset = new Vector3(.5f,0,.25f);
+        private GameObject _leftHand;
+        private GameObject _rightHand;
+        
+        private bool canInteract;
+        private GameObject currentInteractable;
 
         private const float Gravity = -9.81f;
-
 
         private void Awake()
         {
@@ -72,7 +81,13 @@ namespace Player
         
         private void Update()
         {
-            Vector2 moveInput = _moveAction.ReadValue<Vector2>();
+            ProcessLook();
+            ProcessMove();
+            CheckCursor();
+        }
+        
+        private void ProcessLook()
+        {
             Vector2 lookInput = _lookAction.ReadValue<Vector2>();
             
             rotation.x += lookInput.x * sensitivity;
@@ -82,7 +97,11 @@ namespace Player
 
             _cameraTransform.localRotation = yQuat;
             transform.localRotation = xQuat;
+        }
 
+        private void ProcessMove()
+        {
+            Vector2 moveInput = _moveAction.ReadValue<Vector2>();
             Vector3 moveDirection = transform.forward * moveInput.y + transform.right * moveInput.x;
             
             if (_cc.isGrounded && verticalVelocity < 0f)
@@ -98,25 +117,16 @@ namespace Player
             } 
             
             _cc.Move(new Vector3(horizontalVelocity.x, verticalVelocity, horizontalVelocity.z) * Time.deltaTime);
+        }
+        
+        private void CheckCursor()
+        {
+            var isHit = Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out var hit, interactDistance);
             
-            Debug.DrawRay(
-                _cameraTransform.position,
-                _cameraTransform.forward * interactDistance,
-                Color.red
-            );
+            canInteract = isHit && hit.collider.CompareTag("Interactable") && hit.collider.transform.parent==null;
+            currentInteractable = canInteract ? hit.collider.gameObject : null;
             
-            if (Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out RaycastHit hit, interactDistance))
-            {
-                if (hit.collider.CompareTag("Interactable"))
-                {
-                    Debug.Log("Interactable");
-                    MenuManager.Instance.SetCursorText("E - Interact");
-                }
-                else
-                {
-                    // Hide tip
-                }
-            }
+            MenuManager.Instance.SetCursorText(canInteract ? "E - Interact" : "");
         }
 
         /// <summary>Function for use when pressing a rebind button.</summary>
@@ -133,8 +143,55 @@ namespace Player
         }
 
         private void OnInteract(InputAction.CallbackContext ctx)
+        { 
+            if (TryPickUp()) return;
+            if (PutDown()) return;
+            PutDown(false);
+        }
+
+        private bool TryPickUp()
         {
+            if (!canInteract) return false;
             
-        } 
+            if (_leftHand==null)
+            {
+                _leftHand = currentInteractable;
+            }
+            else if (_rightHand == null)
+            {
+                _rightHand = currentInteractable;
+            }
+            else
+            {
+                return false;
+            }
+            
+            currentInteractable.transform.parent = transform;
+            currentInteractable.transform.localPosition = new Vector3(_leftHand==currentInteractable ? -_carryOffset.x : _carryOffset.x, _carryOffset.y, _carryOffset.z);
+            var rb = currentInteractable.GetComponent<Rigidbody>().useGravity = false;
+            currentInteractable.GetComponent<Collider>().enabled = false;
+            return true;
+        }
+
+        private bool PutDown(bool left = true)
+        {
+            var target = left ? _leftHand : _rightHand;
+            if (target==null) return false;
+            
+            target.transform.SetParent(null, true);
+            var rb = target.GetComponent<Rigidbody>().useGravity = true;
+            target.GetComponent<Collider>().enabled = true;
+
+            if (left)
+            {
+                _leftHand = null;
+            }
+            else
+            {
+                _rightHand = null;
+            }
+            
+            return true;
+        }
     }
 }

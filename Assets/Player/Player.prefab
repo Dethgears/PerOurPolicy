@@ -151,6 +151,7 @@ GameObject:
   - component: {fileID: 241182069877096327}
   - component: {fileID: 3529338428262456796}
   - component: {fileID: 6435761991539900012}
+  - component: {fileID: 3589460021509674060}
   - component: {fileID: 8061071656100194253}
   m_Layer: 0
   m_Name: Player
@@ -267,7 +268,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
-  m_Actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  m_Actions: {fileID: -944628639613478452, guid: 1bf71450a20535b438ac32eec85090cf, type: 3}
   m_NotificationBehavior: 2
   m_UIInputModule: {fileID: 0}
   m_DeviceLostEvent:
@@ -348,17 +349,9 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 9caa3d8a-6b2f-4e8e-8bad-6ede561bd9be
     m_ActionName: UI/TrackedDeviceOrientation
-  - m_PersistentCalls:
-      m_Calls: []
-    m_ActionId: 2776c80d-3c14-4091-8c56-d04ced07a2b0
-    m_ActionName: 'Player/Previous[/Keyboard/1]'
-  - m_PersistentCalls:
-      m_Calls: []
-    m_ActionId: b7230bb6-fc9b-4f52-8b25-f5e19cb2c2ba
-    m_ActionName: 'Player/Next[/Keyboard/2]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
-  m_DefaultActionMap: 
+  m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
 --- !u!114 &6435761991539900012
@@ -378,6 +371,24 @@ MonoBehaviour:
   moveSpeed: 4
   jumpHeight: 1
   airControl: 2
+  interactDistance: 2
+--- !u!114 &3589460021509674060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4817150941167260758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e9c6463d66149f47b9a3d35fa06f72e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  sprintMultiplier: 1.5
+  maxStamina: 100
+  jumpDrain: 3
+  sprintDrain: 3.5
+  staminaRegen: 2.5
 --- !u!143 &8061071656100194253
 CharacterController:
   m_ObjectHideFlags: 0

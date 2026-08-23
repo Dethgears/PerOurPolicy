@@ -1,24 +1,27 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-public class HUD : MonoBehaviour
+namespace Menu.Menus
 {
-    Text cursorText;
-    
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public class HUD : MonoBehaviour
     {
-        cursorText = transform.Find("CursorText").GetComponent<Text>();
-    }
+        TMP_Text cursorText;
+    
+        // Start is called once before the first execution of Update after the MonoBehaviour is created
+        void Start()
+        {
+            cursorText = transform.Find("CursorText").GetComponent<TMP_Text>();
+        }
 
-    // Update is called once per frame
-    void Update()
-    {
+        // Update is called once per frame
+        void Update()
+        {
         
-    }
+        }
     
-    public void SetCursorText(string text)
-    {
-        cursorText.text = text;
+        public void SetCursorText(string text)
+        {
+            cursorText.text = text;
+        }
     }
 }
