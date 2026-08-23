@@ -1,6 +1,8 @@
+using Menu;
 using Player.Input;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace Player
 {
@@ -8,42 +10,113 @@ namespace Player
     [RequireComponent(typeof(CharacterController))]
     public class PlayerController : MonoBehaviour
     {
+        [Header("Camera")]
+        [Range(0.1f, 9f)][SerializeField] float sensitivity = .5f;
+        [Tooltip("Limits vertical camera rotation.")]
+        [Range(0f, 90f)][SerializeField] float yRotationLimit = 88f;
+        
+        [Header("Movement")]
         [SerializeField] private float moveSpeed = 5f;
+        [SerializeField] private float jumpHeight = 1f;
+        [SerializeField] private float airControl = 1f;
+        
+        [Header("Interact")]
+        [SerializeField] public float interactDistance = 2f;
 
         private PlayerInput _playerInput;
         private CharacterController _cc;
+        private Transform _cameraTransform;
 
         private InputAction _moveAction;
+        private InputAction _lookAction;
         private InputAction _jumpAction;
-        private InputAction _attackAction;
+        private InputAction _interactAction;
+
+        private Vector2 rotation = Vector2.zero;
+        private float verticalVelocity;
+        private Vector3 horizontalVelocity;
+
+        private const float Gravity = -9.81f;
+
 
         private void Awake()
         {
             _playerInput = GetComponent<PlayerInput>();
             _cc = GetComponent<CharacterController>();
+            _cameraTransform = transform.GetChild(0);
 
             _moveAction = _playerInput.actions["Player/Move"];
+            _lookAction = _playerInput.actions["Player/Look"];
             _jumpAction = _playerInput.actions["Player/Jump"];
-            _attackAction = _playerInput.actions["Player/Attack"];
+            _interactAction = _playerInput.actions["Player/Interact"];
+            
+            if (SceneManager.GetActiveScene().name != "Menu")
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+                MenuManager.Instance.ShowHUD();
+            }
         }
 
         private void OnEnable()
         {
             _jumpAction.performed += OnJump;
-            _attackAction.performed += OnAttack;
+            _interactAction.performed += OnInteract; 
         }
 
         private void OnDisable()
         {
             _jumpAction.performed -= OnJump;
-            _attackAction.performed -= OnAttack;
+            _interactAction.performed -= OnInteract;
         }
-
+        
         private void Update()
         {
             Vector2 moveInput = _moveAction.ReadValue<Vector2>();
-            Vector3 moveDirection = new Vector3(moveInput.x, 0, moveInput.y).normalized;
-            _cc.Move(moveDirection * (moveSpeed * Time.deltaTime));
+            Vector2 lookInput = _lookAction.ReadValue<Vector2>();
+            
+            rotation.x += lookInput.x * sensitivity;
+            rotation.y = Mathf.Clamp(rotation.y + lookInput.y * sensitivity, -yRotationLimit, yRotationLimit);
+            var xQuat = Quaternion.AngleAxis(rotation.x, Vector3.up);
+            var yQuat = Quaternion.AngleAxis(rotation.y, Vector3.left);
+
+            _cameraTransform.localRotation = yQuat;
+            transform.localRotation = xQuat;
+
+            Vector3 moveDirection = transform.forward * moveInput.y + transform.right * moveInput.x;
+            
+            if (_cc.isGrounded && verticalVelocity < 0f)
+            {
+                verticalVelocity = -2f;
+                horizontalVelocity = moveDirection * moveSpeed;
+            }
+            else
+            {
+                verticalVelocity += Gravity * Time.deltaTime;
+                var targetVelocity = moveDirection * moveSpeed;
+                horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, targetVelocity, airControl * Time.deltaTime);
+            } 
+            
+            _cc.Move(new Vector3(horizontalVelocity.x, verticalVelocity, horizontalVelocity.z) * Time.deltaTime);
+            
+            Debug.DrawRay(
+                _cameraTransform.position,
+                _cameraTransform.forward * interactDistance,
+                Color.red
+            );
+            
+            if (Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out RaycastHit hit, interactDistance))
+            {
+                if (hit.collider.CompareTag("Interactable"))
+                {
+                    Debug.Log("Interactable");
+                    MenuManager.Instance.SetCursorText("E - Interact");
+                }
+                else
+                {
+                    // Hide tip
+                }
+            }
         }
 
         /// <summary>Function for use when pressing a rebind button.</summary>
@@ -52,7 +125,16 @@ namespace Player
             InputManager.Instance.StartRebind(_playerInput.playerIndex, actionName, bindingIndex);
         }
 
-        private void OnJump(InputAction.CallbackContext ctx) { /* jump logic */ }
-        private void OnAttack(InputAction.CallbackContext ctx) { /* attack logic */ }
+        private void OnJump(InputAction.CallbackContext ctx)
+        {
+            if (!_cc.isGrounded) return;
+            
+            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * Gravity);
+        }
+
+        private void OnInteract(InputAction.CallbackContext ctx)
+        {
+            
+        } 
     }
 }

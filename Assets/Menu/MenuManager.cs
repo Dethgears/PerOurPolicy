@@ -12,6 +12,7 @@ namespace Menu
         [SerializeField] private PauseMenu pauseMenu;
         [SerializeField] private SettingsMenu settingsMenu;
         [SerializeField] private CreditsMenu creditsMenu;
+        [SerializeField] private HUD hud;
  
         private readonly Stack<MenuBase> _history = new();
         private MenuBase _currentMenu;
@@ -57,5 +58,15 @@ namespace Menu
         public void OpenPause() => OpenMenu(pauseMenu);
         public void OpenSettings() => OpenMenu(settingsMenu);
         public void OpenCredits() => OpenMenu(creditsMenu);
+
+        public void ShowHUD()
+        {
+            hud.GetComponent<CanvasGroup>().alpha = 1;
+        }
+
+        public void SetCursorText(string text)
+        {
+            hud.SetCursorText(text);
+        }
     }
 }
