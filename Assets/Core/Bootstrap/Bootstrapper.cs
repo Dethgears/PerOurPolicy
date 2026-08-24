@@ -13,6 +13,7 @@ namespace Core.Bootstrap
         [SerializeField] private GameObject inputManagerPrefab;
         [SerializeField] private GameObject menuManagerPrefab;
         [SerializeField] private GameObject saveManagerPrefab;
+        [SerializeField] private GameObject networkSessionManagerPrefab;
  
         private void Awake()
         {
@@ -22,6 +23,7 @@ namespace Core.Bootstrap
             InstantiateAndPersist(inputManagerPrefab);
             InstantiateAndPersist(menuManagerPrefab);
             InstantiateAndPersist(saveManagerPrefab);
+            InstantiateAndPersist(networkSessionManagerPrefab);
         
             // Load the first real scene
             if (firstSceneAfterBoot == null) return;

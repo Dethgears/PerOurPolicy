@@ -926,10 +926,10 @@ PlayerSettings:
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
   enableDirectStorage: 0
-  cloudProjectId: 9ee62899-c224-4272-a1cc-46ed02609986
+  cloudProjectId: 1334fa6d-aacd-430e-abe0-0f9a23763fc5
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: WavelineCore
+  projectName: WavelineCore (1)
   organizationId: tber8mnjd8t2v
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
