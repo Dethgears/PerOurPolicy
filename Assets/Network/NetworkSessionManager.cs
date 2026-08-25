@@ -21,13 +21,11 @@ namespace Network
     ///          GameObjects' NetworkManager.
     /// DEPENDENCIES: A linked Unity Gaming Services project with Authentication and
     ///               Multiplayer Services enabled, plus a persistent NetworkManager +
-    ///               UnityTransport (both instantiated by Bootstrapper). Deliberately has
-    ///               NO dependency on GameManager or any other subsystem - see
-    ///               Architecture-Guide.md, "Multiplayer Sessions," for how the two are
-    ///               meant to be wired together from the UI layer instead.
+    ///               UnityTransport (both instantiated by Bootstrapper).
     /// EVENTS PUBLISHED: OnSessionJoined(ISession), OnSessionLeft, OnSessionPlayersChanged,
-    ///                    OnGameStarted, OnSessionError(string message); optionally raises
-    ///                    the assigned onSessionJoined/onSessionLeft GameEvent assets.
+    ///                    OnGameStarted, OnLocalClientEnteredGame, OnSessionError(string);
+    ///                    optionally raises the assigned onSessionJoined/onSessionLeft
+    ///                    GameEvent assets.
     /// PUBLIC API: CreateSessionAsync, JoinSessionByCodeAsync, JoinSessionByIdAsync,
     ///             QueryAvailableSessionsAsync, StartGame, LeaveSessionAsync,
     ///             CloseSessionAsync, CurrentSession, IsInSession, IsSessionHost
@@ -44,16 +42,19 @@ namespace Network
 
         public ISession CurrentSession { get; private set; }
         public bool IsInSession => CurrentSession != null;
-        public bool IsSessionHost => CurrentSession is IHostSession;
+        public bool IsSessionHost => CurrentSession.IsHost;
 
         public event Action<ISession> OnSessionJoined;
         public event Action OnSessionLeft;
         public event Action OnSessionPlayersChanged;
-        /// <summary>Fires only on the host, the moment it calls StartGame(). Non-host clients
-        /// arrive in the gameplay scene via Netcode's own scene sync, not this event - see
-        /// LobbyMenu's use of NetworkManager.SceneManager.OnLoadComplete for the symmetric,
-        /// fires-on-everyone version of "we're in the game now."</summary>
+        /// <summary>Fires only on the host, the moment it calls StartGame(). Not what UI
+        /// should use to react locally - see OnLocalClientEnteredGame below.</summary>
         public event Action OnGameStarted;
+        /// <summary>Fires on EVERY client (host and joiners alike) once ITS OWN local scene
+        /// load into the gameplay scene finishes. This is what UI should subscribe to for
+        /// "close the lobby screen now" - it's the one guaranteed to fire everywhere, unlike
+        /// OnGameStarted above.</summary>
+        public event Action OnLocalClientEnteredGame;
         public event Action<string> OnSessionError;
 
         private Task<bool> _servicesReadyTask;
@@ -61,18 +62,11 @@ namespace Network
         private void Start()
         {
             if (IsDuplicate) return;
-            
-            if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager !=  null)
-                NetworkManager.Singleton.SceneManager.OnLoadComplete += HandleSceneLoadComplete;
-            
             _ = EnsureServicesReadyAsync(); // warm up sign-in so the first Create/Join click doesn't have to wait
         }
 
         private void OnApplicationQuit()
         {
-            if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager !=  null)
-                NetworkManager.Singleton.SceneManager.OnLoadComplete -= HandleSceneLoadComplete;
-            
             if (CurrentSession != null)
                 _ = CurrentSession.LeaveAsync(); // best-effort - the process may close before this finishes
         }
@@ -187,11 +181,18 @@ namespace Network
                 return Array.Empty<ISessionInfo>();
             }
         }
-        
+
+        /// <summary>
+        /// Local-only reaction to a scene finishing loading - fires on host and clients
+        /// alike, each on their own machine, once THEIR OWN load completes. This is the
+        /// symmetric alternative to OnGameStarted (host-only).
+        /// </summary>
         private void HandleSceneLoadComplete(ulong clientId, string sceneName, LoadSceneMode mode)
         {
-            if (clientId == NetworkManager.Singleton.LocalClientId)
-                GameManager.Instance.SetState(GameState.Playing);
+            if (clientId != NetworkManager.Singleton.LocalClientId) return;
+
+            GameManager.Instance.SetState(GameState.Playing);
+            OnLocalClientEnteredGame?.Invoke();
         }
 
         /// <summary>Host-only: moves everyone into the gameplay scene through Netcode's scene manager, which propagates the load to every connected client.</summary>
@@ -241,6 +242,17 @@ namespace Network
             session.PlayerJoined += HandleSessionPlayerJoined;
             session.PlayerLeaving += HandleSessionPlayerLeft;
             session.RemovedFromSession += HandleRemovedFromSession;
+
+            // NetworkManager.SceneManager doesn't exist until the network is actually
+            // listening - which .WithRelayNetwork() only guarantees once the session
+            // create/join call above has completed. Subscribing any earlier (e.g. in
+            // Start()) silently no-ops because SceneManager is still null at that point -
+            // that was the original bug.
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager != null)
+                NetworkManager.Singleton.SceneManager.OnLoadComplete += HandleSceneLoadComplete;
+            else
+                Debug.LogWarning("[NetworkSessionManager] NetworkManager.SceneManager wasn't ready right after joining - scene-load completion won't be detected for this session.");
+
             OnSessionJoined?.Invoke(session);
             onSessionJoined?.Raise();
         }
@@ -251,6 +263,10 @@ namespace Network
             CurrentSession.PlayerJoined -= HandleSessionPlayerJoined;
             CurrentSession.PlayerLeaving -= HandleSessionPlayerLeft;
             CurrentSession.RemovedFromSession -= HandleRemovedFromSession;
+
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager != null)
+                NetworkManager.Singleton.SceneManager.OnLoadComplete -= HandleSceneLoadComplete;
+
             CurrentSession = null;
             OnSessionLeft?.Invoke();
             onSessionLeft?.Raise();

@@ -2,9 +2,7 @@ using System.Collections.Generic;
 using Game;
 using Unity.Services.Multiplayer;
 using TMPro;
-using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UI;
 using Network;
@@ -13,11 +11,10 @@ namespace Menu.Menus
 {
     /// <summary>
     /// Create/browse/join sessions and see who's connected before the host starts the
-    /// game. NetworkSessionManager and GameManager don't reference each other (see
-    /// Architecture-Guide.md, "Multiplayer Sessions") - this is where the two get
-    /// bridged: joining a session becomes GameState.Lobby, arriving in the gameplay
-    /// scene becomes GameState.Playing. Drive it through MenuManager like any other
-    /// MenuBase screen - don't call Open()/Close() on it directly.
+    /// game. NetworkSessionManager owns the connection; GameManager owns game state;
+    /// this menu is where the two get bridged for the local player, including closing
+    /// itself once this client has actually entered the gameplay scene. Drive it through
+    /// MenuManager like any other MenuBase screen - don't call Open()/Close() on it directly.
     /// </summary>
     public class LobbyMenu : MenuBase
     {
@@ -63,7 +60,7 @@ namespace Menu.Menus
             NetworkSessionManager.Instance.OnSessionLeft += HandleSessionLeft;
             NetworkSessionManager.Instance.OnSessionPlayersChanged += RefreshPlayerList;
             NetworkSessionManager.Instance.OnSessionError += ShowStatus;
-            NetworkSessionManager.Instance.OnGameStarted += MenuManager.Instance.CloseMenu;
+            NetworkSessionManager.Instance.OnLocalClientEnteredGame += HandleLocalClientEnteredGame;
 
             RefreshForCurrentSessionState();
             if (!NetworkSessionManager.Instance.IsInSession) RefreshSessionList();
@@ -76,8 +73,11 @@ namespace Menu.Menus
             NetworkSessionManager.Instance.OnSessionLeft -= HandleSessionLeft;
             NetworkSessionManager.Instance.OnSessionPlayersChanged -= RefreshPlayerList;
             NetworkSessionManager.Instance.OnSessionError -= ShowStatus;
-            NetworkSessionManager.Instance.OnGameStarted -= MenuManager.Instance.CloseMenu;
+            NetworkSessionManager.Instance.OnLocalClientEnteredGame -= HandleLocalClientEnteredGame;
         }
+
+        /// <summary>Fires locally once THIS client (host or joiner) has actually finished loading into the gameplay scene - see NetworkSessionManager.OnLocalClientEnteredGame.</summary>
+        private void HandleLocalClientEnteredGame() => MenuManager.Instance.CloseMenu();
 
         private async void OnCreateClicked()
         {
@@ -158,7 +158,7 @@ namespace Menu.Menus
 
             var session = NetworkSessionManager.Instance.CurrentSession;
             if (session == null) return;
-            
+
             foreach (var player in session.Players)
             {
                 var row = Instantiate(playerListRowPrefab, playerListContent);
