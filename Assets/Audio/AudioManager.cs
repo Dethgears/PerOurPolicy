@@ -68,7 +68,12 @@ namespace Audio
 
             BuildPool();
             SetupMusicSources();
-            LoadVolumes();
+        }
+
+        private void Start()
+        {
+            if (IsDuplicate) return;
+            LoadVolumes(); 
         }
 
         // ---------------- Volume ----------------
@@ -241,7 +246,7 @@ namespace Audio
             float t = 0f;
             while (t < fadeTime)
             {
-                t += Time.unscaledDeltaTime;
+                t += Time.unscaledDeltaTime; // matches MenuBase's fades: keeps working while paused
                 float p = t / fadeTime;
                 incoming.volume = Mathf.Lerp(0f, track.baseVolume, p);
                 outgoing.volume = Mathf.Lerp(startOutgoingVolume, 0f, p);

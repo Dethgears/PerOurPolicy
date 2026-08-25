@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Core.Events;
+using Game;
 using Unity.Netcode;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
@@ -60,11 +61,18 @@ namespace Network
         private void Start()
         {
             if (IsDuplicate) return;
+            
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager !=  null)
+                NetworkManager.Singleton.SceneManager.OnLoadComplete += HandleSceneLoadComplete;
+            
             _ = EnsureServicesReadyAsync(); // warm up sign-in so the first Create/Join click doesn't have to wait
         }
 
         private void OnApplicationQuit()
         {
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager !=  null)
+                NetworkManager.Singleton.SceneManager.OnLoadComplete -= HandleSceneLoadComplete;
+            
             if (CurrentSession != null)
                 _ = CurrentSession.LeaveAsync(); // best-effort - the process may close before this finishes
         }
@@ -179,6 +187,12 @@ namespace Network
                 return Array.Empty<ISessionInfo>();
             }
         }
+        
+        private void HandleSceneLoadComplete(ulong clientId, string sceneName, LoadSceneMode mode)
+        {
+            if (clientId == NetworkManager.Singleton.LocalClientId)
+                GameManager.Instance.SetState(GameState.Playing);
+        }
 
         /// <summary>Host-only: moves everyone into the gameplay scene through Netcode's scene manager, which propagates the load to every connected client.</summary>
         public void StartGame(string gameplaySceneName)
@@ -248,7 +262,7 @@ namespace Network
         private void HandleRemovedFromSession()
         {
             UnbindSession();
-            OnSessionError?.Invoke("You were removed from the session.");
+            OnSessionError?.Invoke("You exited the session.");
         }
     }
 }

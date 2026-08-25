@@ -672,10 +672,22 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: DefaultScene
           m_BoolArgument: 0
-        m_CallState: 2
+        m_CallState: 0
       - m_Target: {fileID: 366590067410482349, guid: 5a7949823517f6d41b494c3b1ad3ac79, type: 3}
         m_TargetAssemblyTypeName: Menu.MenuManager, Assembly-CSharp
         m_MethodName: CloseMenu
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 0
+      - m_Target: {fileID: 366590067410482349, guid: 5a7949823517f6d41b494c3b1ad3ac79, type: 3}
+        m_TargetAssemblyTypeName: Menu.MenuManager, Assembly-CSharp
+        m_MethodName: OpenLobby
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

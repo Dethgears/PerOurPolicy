@@ -13,6 +13,7 @@ namespace Menu
         [SerializeField] private PauseMenu pauseMenu;
         [SerializeField] private SettingsMenu settingsMenu;
         [SerializeField] private CreditsMenu creditsMenu;
+        [SerializeField] private LobbyMenu lobbyMenu;
         [SerializeField] private HUD hud;
  
         private readonly Stack<MenuBase> _history = new();
@@ -59,6 +60,7 @@ namespace Menu
         public void OpenPause() => OpenMenu(pauseMenu);
         public void OpenSettings() => OpenMenu(settingsMenu);
         public void OpenCredits() => OpenMenu(creditsMenu);
+        public void OpenLobby() => OpenMenu(lobbyMenu);
 
         public void ShowHUD()
         {

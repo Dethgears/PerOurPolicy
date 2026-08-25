@@ -22,6 +22,7 @@ namespace Menu.Menus
     public class LobbyMenu : MenuBase
     {
         [Header("Create / Join")]
+        [SerializeField] private GameObject findSessionPanel;
         [SerializeField] private TMP_InputField sessionNameField;
         [SerializeField] private TMP_InputField joinCodeField;
         [SerializeField] private Button createButton;
@@ -29,7 +30,7 @@ namespace Menu.Menus
         [SerializeField] private Button refreshButton;
         [SerializeField] private TMP_Text statusText;
 
-        [Header("Public session list (the server browser)")]
+        [Header("Public session list (the server browser)")] 
         [SerializeField] private Transform sessionListContent;
         [SerializeField] private SessionListItemView sessionListItemPrefab;
 
@@ -37,7 +38,7 @@ namespace Menu.Menus
         [SerializeField] private GameObject inSessionPanel;
         [SerializeField] private TMP_Text sessionCodeText;
         [SerializeField] private Transform playerListContent;
-        [SerializeField] private TMP_Text playerListRowPrefab; // one line of text per connected player
+        [SerializeField] private TMP_Text playerListRowPrefab;
         [SerializeField] private Button startGameButton;
         [SerializeField] private Button leaveButton;
         [SerializeField] private string gameplaySceneName = "DefaultScene";
@@ -62,12 +63,7 @@ namespace Menu.Menus
             NetworkSessionManager.Instance.OnSessionLeft += HandleSessionLeft;
             NetworkSessionManager.Instance.OnSessionPlayersChanged += RefreshPlayerList;
             NetworkSessionManager.Instance.OnSessionError += ShowStatus;
-
-            // Fires on host AND clients alike once a scene load actually completes locally -
-            // this is what makes "the game started" symmetric, unlike NetworkSessionManager's
-            // OnGameStarted, which only fires on the host that called StartGame().
-            if (NetworkManager.Singleton != null)
-                NetworkManager.Singleton.SceneManager.OnLoadComplete += HandleSceneLoadComplete;
+            NetworkSessionManager.Instance.OnGameStarted += MenuManager.Instance.CloseMenu;
 
             RefreshForCurrentSessionState();
             if (!NetworkSessionManager.Instance.IsInSession) RefreshSessionList();
@@ -80,9 +76,7 @@ namespace Menu.Menus
             NetworkSessionManager.Instance.OnSessionLeft -= HandleSessionLeft;
             NetworkSessionManager.Instance.OnSessionPlayersChanged -= RefreshPlayerList;
             NetworkSessionManager.Instance.OnSessionError -= ShowStatus;
-
-            if (NetworkManager.Singleton != null)
-                NetworkManager.Singleton.SceneManager.OnLoadComplete -= HandleSceneLoadComplete;
+            NetworkSessionManager.Instance.OnGameStarted -= MenuManager.Instance.CloseMenu;
         }
 
         private async void OnCreateClicked()
@@ -145,15 +139,10 @@ namespace Menu.Menus
             RefreshForCurrentSessionState();
         }
 
-        private void HandleSceneLoadComplete(ulong clientId, string sceneName, LoadSceneMode mode)
-        {
-            if (clientId == NetworkManager.Singleton.LocalClientId)
-                GameManager.Instance.SetState(GameState.Playing);
-        }
-
         private void RefreshForCurrentSessionState()
         {
             bool inSession = NetworkSessionManager.Instance.IsInSession;
+            findSessionPanel.SetActive(!inSession);
             inSessionPanel.SetActive(inSession);
             if (!inSession) return;
 
@@ -169,11 +158,7 @@ namespace Menu.Menus
 
             var session = NetworkSessionManager.Instance.CurrentSession;
             if (session == null) return;
-
-            // NOTE: enumerating connected players (session.Players below) is one of the
-            // areas most likely to need a small tweak depending on the exact Multiplayer
-            // Services package version Package Manager installs - check ISession's current
-            // member list if this doesn't compile as-is.
+            
             foreach (var player in session.Players)
             {
                 var row = Instantiate(playerListRowPrefab, playerListContent);
