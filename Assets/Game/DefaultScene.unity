@@ -228,6 +228,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Cube (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 4228139091115506844, guid: efb877f0b85381141ad50e3365b6f5c3, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4228139091115506844, guid: efb877f0b85381141ad50e3365b6f5c3, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 3766858599
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -475,6 +483,22 @@ PrefabInstance:
     - target: {fileID: 3149571172791162496, guid: efb877f0b85381141ad50e3365b6f5c3, type: 3}
       propertyPath: m_Name
       value: Cube
+      objectReference: {fileID: 0}
+    - target: {fileID: 4228139091115506844, guid: efb877f0b85381141ad50e3365b6f5c3, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4228139091115506844, guid: efb877f0b85381141ad50e3365b6f5c3, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 3057897627
+      objectReference: {fileID: 0}
+    - target: {fileID: 4228139091115506844, guid: efb877f0b85381141ad50e3365b6f5c3, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4228139091115506844, guid: efb877f0b85381141ad50e3365b6f5c3, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 107525783
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

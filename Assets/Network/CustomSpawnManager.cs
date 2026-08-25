@@ -24,6 +24,8 @@ public class CustomSpawnManager : MonoBehaviour {
             
             // Assign ownership to the client
             player.GetComponent<NetworkObject>().SpawnWithOwnership(clientId);
+            
+            Destroy(spawnPoints[0]);
         }
     }
 }

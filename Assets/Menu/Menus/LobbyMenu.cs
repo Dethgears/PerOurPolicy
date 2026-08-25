@@ -77,7 +77,14 @@ namespace Menu.Menus
         }
 
         /// <summary>Fires locally once THIS client (host or joiner) has actually finished loading into the gameplay scene - see NetworkSessionManager.OnLocalClientEnteredGame.</summary>
-        private void HandleLocalClientEnteredGame() => MenuManager.Instance.CloseMenu();
+        private void HandleLocalClientEnteredGame()
+        {
+            MenuManager.Instance.CloseMenu();
+            
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            MenuManager.Instance.ShowHUD();
+        }
 
         private async void OnCreateClicked()
         {
