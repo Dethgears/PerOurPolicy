@@ -1,10 +1,11 @@
+using Game.Pickup;
+using Game.Shop;
 using Menu;
 using Player.Input;
+using Unity.Cinemachine;
 using Unity.Netcode;
-using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 
 namespace Player
 {
@@ -131,9 +132,11 @@ namespace Player
 
         private void CheckCursor()
         {
-            var isHit = Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out var hit, interactDistance);
-
-            canInteract = isHit && hit.collider.CompareTag("Interactable") && hit.collider.transform.parent == null;
+            // Define the layer mask to exclude the "Ignore Raycast" layer (Layer 2)
+            int layerMask = ~(1 << 2);
+            var isHit = Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out var hit, interactDistance, layerMask);
+            
+            canInteract = isHit && hit.collider.CompareTag("Interactable") && hit.collider.transform.parent != transform;
             currentInteractable = canInteract ? hit.collider.gameObject : null;
 
             MenuManager.Instance.SetCursorText(canInteract ? "E - Interact" : "");
@@ -165,7 +168,7 @@ namespace Player
                 targetId = netObj.NetworkObjectId;
                 hasTarget = true;
             }
-
+            
             RequestInteractServerRpc(targetId, hasTarget);
         }
 
@@ -178,6 +181,14 @@ namespace Player
                 target = netObj;
             }
 
+            if (target != null && !target.TryGetComponent<Pickup>(out var _))
+            {
+                // It's a button
+                var shop = target.GetComponentInParent<Shop>();
+                shop.OnButtonPressed();
+                return;
+            }
+            
             if (TryPickUp(target)) return;
             if (PutDown()) return;
             PutDown(false);
@@ -185,7 +196,7 @@ namespace Player
 
         // Runs on the server only (called from RequestInteractServerRpc).
         private bool TryPickUp(NetworkObject target)
-        {
+        { 
             if (target == null) return false;
             if (_leftHand != null && _rightHand != null) return false;
 
@@ -196,8 +207,8 @@ namespace Player
             target.TrySetParent(NetworkObject, false);
             target.transform.localPosition = new Vector3(goesInLeftHand ? -_carryOffset.x : _carryOffset.x, _carryOffset.y, _carryOffset.z);
             
-            if (target.TryGetComponent<Rigidbody>(out var rb)) rb.useGravity = false;
-            if (target.TryGetComponent<Collider>(out var col)) col.enabled = false;
+            if (target.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = true;
+            if (target.TryGetComponent<Collider>(out var col)) col.isTrigger = true;
             //if (target.TryGetComponent<NetworkTransform>(out var nt)) nt.enabled = false;
 
             return true;
@@ -211,8 +222,8 @@ namespace Player
 
             target.TrySetParent((NetworkObject)null, true);
 
-            if (target.TryGetComponent<Rigidbody>(out var rb)) rb.useGravity = true;
-            if (target.TryGetComponent<Collider>(out var col)) col.enabled = true;
+            if (target.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = false;
+            if (target.TryGetComponent<Collider>(out var col)) col.isTrigger = false;
             //if (target.TryGetComponent<NetworkTransform>(out var nt)) nt.enabled = true;
 
             if (left) _leftHand = null;

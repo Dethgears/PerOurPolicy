@@ -157,6 +157,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   value: 250
+  variation: 0.25
 --- !u!114 &4228139091115506844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -169,7 +170,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3766858599
+  GlobalObjectIdHash: 3057897627
   InScenePlacedSourceGlobalObjectIdHash: 107525783
   DeferredDespawnTick: 0
   Ownership: 1

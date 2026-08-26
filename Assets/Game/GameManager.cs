@@ -33,6 +33,10 @@ namespace Game
         public event Action<GameState, GameState> OnStateChanged;
         public bool IsPaused => _pauseSources.Count > 0;
 
+        public int money = 0;
+        public int quota = 100;
+        public int roundDeaths = 0;
+
         private readonly HashSet<object> _pauseSources = new();
         private GameState _stateBeforePause;
         private float _previousTimeScale = 1f;

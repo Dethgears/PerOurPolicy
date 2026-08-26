@@ -1,47 +1,159 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Enemy
 {
     public class EnemyController : MonoBehaviour
     {
         [Header("Movement")]
-        [SerializeField] float moveSpeed = 5f;
-        [SerializeField] float minStateTime = 0.5f;
-        [SerializeField] float maxStateTime = 2f;
+        [SerializeField] private float minStateTime = 0.5f;
+        [SerializeField] private float maxStateTime = 2f;
 
-        private enum EnemyStateEnum
+        [Header("Detection")]
+        [SerializeField] private float sightRange = 10f;
+        [SerializeField] private float sightAngle = 90f;
+        [SerializeField] private float loseTargetTime = 3f;
+
+        [Header("Target")]
+        [SerializeField] private Transform player;
+
+        private enum EnemyState
         {
             Idle,
             Walking,
             Running
         }
-        
-        private CharacterController controller;
-    
-        private Vector3 moveDirection;
-        private EnemyStateEnum state;
+
+        private NavMeshAgent agent;
+        private EnemyState state;
+
         private float timeInState;
         private float stateTime;
-    
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
-        void Start()
+        private float timeSincePlayerSeen;
+
+        private void Awake()
         {
-            controller = GetComponent<CharacterController>();
+            agent = GetComponent<NavMeshAgent>();
         }
 
-        // Update is called once per frame
-        void Update()
+        private void Start()
         {
-            controller.Move(moveDirection.normalized * (moveSpeed * Time.deltaTime));
-            transform.rotation = Quaternion.LookRotation(moveDirection);
-            
+            ChangeState();
+        }
+
+        private void Update()
+        {
+            UpdateDetection();
+
+            if (state == EnemyState.Running && player != null)
+            {
+                agent.SetDestination(player.position);
+            }
+
             timeInState += Time.deltaTime;
-            if (timeInState >= stateTime) ChangeState();
+
+            if (state != EnemyState.Running &&
+                timeInState >= stateTime)
+            {
+                ChangeState();
+            }
+        }
+
+        private void UpdateDetection()
+        {
+            if (player == null)
+                return;
+
+            if (CanSeePlayer())
+            {
+                timeSincePlayerSeen = 0f;
+
+                if (state != EnemyState.Running)
+                    SetState(EnemyState.Running);
+            }
+            else if (state == EnemyState.Running)
+            {
+                timeSincePlayerSeen += Time.deltaTime;
+
+                if (timeSincePlayerSeen >= loseTargetTime)
+                    ChangeState();
+            }
+        }
+
+        private bool CanSeePlayer()
+        {
+            Vector3 direction = player.position - transform.position;
+            float distance = direction.magnitude;
+
+            if (distance > sightRange)
+                return false;
+
+            direction.y = 0f;
+
+            if (Vector3.Angle(transform.forward, direction) >
+                sightAngle * 0.5f)
+            {
+                return false;
+            }
+
+            if (Physics.Raycast(
+                    transform.position + Vector3.up,
+                    player.position - (transform.position + Vector3.up),
+                    out RaycastHit hit,
+                    sightRange))
+            {
+                return hit.transform == player;
+            }
+
+            return false;
         }
 
         private void ChangeState()
         {
-            
+            EnemyState newState;
+
+            do
+            {
+                newState = (EnemyState)Random.Range(0, 2);
+            }
+            while ((EnemyState)state == newState);
+
+            SetState(newState);
+        }
+
+        private void SetState(EnemyState newState)
+        {
+            state = newState;
+            timeInState = 0f;
+            stateTime = Random.Range(minStateTime, maxStateTime);
+
+            switch (state)
+            {
+                case EnemyState.Idle:
+                    agent.ResetPath();
+                    break;
+
+                case EnemyState.Walking:
+                    SetRandomDestination();
+                    break;
+
+                case EnemyState.Running:
+                    agent.speed = 8f;
+                    break;
+            }
+        }
+
+        private void SetRandomDestination()
+        {
+            if (NavMesh.SamplePosition(
+                    transform.position + Random.insideUnitSphere * 10f,
+                    out NavMeshHit hit,
+                    10f,
+                    NavMesh.AllAreas))
+            {
+                agent.speed = 5f;
+                agent.SetDestination(hit.position);
+            }
         }
     }
 }
