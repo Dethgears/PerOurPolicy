@@ -50,7 +50,7 @@ namespace Player
 
         private bool canInteract;
         private GameObject currentInteractable;
-
+        
         private const float Gravity = -9.81f;
 
         private void Awake()
@@ -62,6 +62,8 @@ namespace Player
 
         public override void OnNetworkSpawn()
         {
+            TrySpawn();
+            
             _moveAction = _playerInput.actions["Player/Move"];
             _lookAction = _playerInput.actions["Player/Look"];
             _jumpAction = _playerInput.actions["Player/Jump"];
@@ -79,6 +81,23 @@ namespace Player
 
             _jumpAction.performed += OnJump;
             _interactAction.performed += OnInteract;
+        }
+
+        private bool TrySpawn()
+        {
+            if (NetworkManager.Singleton == null) return false;
+            var clientId = NetworkManager.Singleton.LocalClientId;
+            
+            // Find available spawn points
+            GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("PlayerSpawn");
+            if (spawnPoints.Length == 0) return false;
+            
+            // Example: Spawn at first available point
+            Transform spawnTransform = spawnPoints[clientId].transform;
+            
+            // Instantiate player at custom position
+            gameObject.transform.SetPositionAndRotation(spawnTransform.position, spawnTransform.rotation);
+            return true;
         }
 
         public override void OnNetworkDespawn()

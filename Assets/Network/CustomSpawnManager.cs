@@ -2,30 +2,31 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class CustomSpawnManager : MonoBehaviour {
-    public GameObject playerPrefab;
+namespace Network
+{
+    public class CustomSpawnManager : MonoBehaviour {
+        public GameObject playerPrefab;
 
-    private void Awake() {
-        if (!NetworkManager.Singleton.IsServer) return;
+        private void Awake() {
+            if (!NetworkManager.Singleton.IsServer) return;
         
-        NetworkManager.Singleton.SceneManager.OnLoadComplete += OnSceneLoaded;
-    }
+            NetworkManager.Singleton.SceneManager.OnLoadComplete += OnSceneLoaded;
+        }
 
-    private void OnSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode) {
-        // Find available spawn points
-        GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("PlayerSpawn");
+        private void OnSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode) {
+            // Find available spawn points
+            GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("PlayerSpawn");
         
-        if (spawnPoints.Length > 0) {
-            // Example: Spawn at first available point
-            Transform spawnTransform = spawnPoints[0].transform;
+            if (spawnPoints.Length > 0) {
+                // Example: Spawn at first available point
+                Transform spawnTransform = spawnPoints[clientId].transform;
             
-            // Instantiate player at custom position
-            GameObject player = Instantiate(playerPrefab, spawnTransform.position, spawnTransform.rotation);
+                // Instantiate player at custom position
+                GameObject player = Instantiate(playerPrefab, spawnTransform.position, spawnTransform.rotation);
             
-            // Assign ownership to the client
-            player.GetComponent<NetworkObject>().SpawnWithOwnership(clientId);
-            
-            Destroy(spawnPoints[0]);
+                // Assign ownership to the client
+                player.GetComponent<NetworkObject>().SpawnWithOwnership(clientId);
+            }
         }
     }
 }
