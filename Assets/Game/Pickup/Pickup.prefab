@@ -17,9 +17,9 @@ GameObject:
   - component: {fileID: 4228139091115506844}
   - component: {fileID: 3093364243526139958}
   - component: {fileID: 6497292586007033782}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Pickup
-  m_TagString: Interactable
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -156,6 +156,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e370d609dde5c1b4e985116dc3391920, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  objectName: 
   value: 250
   variation: 0.25
 --- !u!114 &4228139091115506844
@@ -170,8 +171,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3057897627
+  GlobalObjectIdHash: 107525783
   InScenePlacedSourceGlobalObjectIdHash: 107525783
+  m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0

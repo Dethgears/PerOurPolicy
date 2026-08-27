@@ -1,6 +1,7 @@
 using System;
 using Core.Events;
 using Game.Pickup;
+using Game.Ship;
 using Game.Shop;
 using Menu;
 using Player.Input;
@@ -8,6 +9,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace Player
 {
@@ -28,10 +30,10 @@ namespace Player
 
         [Header("Interact")]
         [SerializeField] public float interactDistance = 2f;
-
+        
         [Header("Local-Only References")]
         [Tooltip("Disabled automatically on remote (non-owner) player instances.")]
-        [SerializeField] private Behaviour[] localComponents;
+        [SerializeField] private GameObject[] localObjects;
         
         private PlayerInput _playerInput;
         private CharacterController _cc;
@@ -47,7 +49,7 @@ namespace Player
         private float verticalVelocity;
         private Vector3 horizontalVelocity;
 
-        private Vector3 _carryOffset = new Vector3(.5f, 0, .25f);
+        private Vector3 _carryOffset = new Vector3(.5f, 1, .25f);
         private NetworkObject _leftHand;
         private NetworkObject _rightHand;
 
@@ -79,9 +81,9 @@ namespace Player
             if (!IsOwner)
             {
                 _playerInput.enabled = false;
-                foreach (var item in localComponents)
+                foreach (var item in localObjects)
                 {
-                    if (item != null) item.enabled = false;
+                    if (item != null) item.SetActive(false);
                 }
                 return;
             }
@@ -161,10 +163,10 @@ namespace Player
         private void CheckCursor()
         {
             // Define the layer mask to exclude the "Ignore Raycast" layer (Layer 2)
-            int layerMask = ~(1 << 2);
+            int layerMask = LayerMask.GetMask("Interactable");
             var isHit = Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out var hit, interactDistance, layerMask);
             
-            canInteract = isHit && hit.collider.CompareTag("Interactable") && hit.collider.transform.parent != transform;
+            canInteract = isHit && hit.collider.transform.parent != transform;
             currentInteractable = canInteract ? hit.collider.gameObject : null;
 
             MenuManager.Instance.SetCursorText(canInteract ? "E - Interact" : "");
@@ -209,17 +211,20 @@ namespace Player
                 target = netObj;
             }
 
-            if (target != null && !target.TryGetComponent<Pickup>(out var _))
+            if (target == null || target.TryGetComponent<Pickup>(out var _))
             {
-                // It's a button
-                var shop = target.GetComponentInParent<Shop>();
-                shop.OnButtonPressed();
+                if (TryPickUp(target)) return;
+                if (PutDown()) return;
+                PutDown(false);
                 return;
             }
             
-            if (TryPickUp(target)) return;
-            if (PutDown()) return;
-            PutDown(false);
+            // It's a button
+            var targetParent = target.transform.parent;
+            if (targetParent == null) return;
+            
+            if (targetParent.TryGetComponent<Shop>(out var shop)) shop.OnButtonPressed();
+            if (targetParent.TryGetComponent<Ship>(out var ship)) ship.OnButtonPressed();
         }
 
         // Runs on the server only (called from RequestInteractServerRpc).

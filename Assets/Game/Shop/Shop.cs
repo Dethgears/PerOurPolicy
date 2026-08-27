@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+// todo: fix ownership of variables and client interaction
+
 namespace Game.Shop
 {
     public class Shop : MonoBehaviour
