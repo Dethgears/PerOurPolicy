@@ -63,7 +63,7 @@ namespace Player
         {
             _playerInput = GetComponent<PlayerInput>();
             _cc = GetComponent<CharacterController>();
-            _cameraTransform = transform.Find("Armature/root/spine.001/spine.002/spine.003/spine.004/spine.005/head/Camera");
+            _cameraTransform = transform.Find("Camera"); //"Character_VoidKnight/root/spine.001/spine.002/spine.003/spine.004/spine.005/head/Camera");
             _animator = GetComponent<Animator>();
         }
 

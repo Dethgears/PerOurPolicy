@@ -20,7 +20,6 @@ namespace Enemy
         
         private GameObject[] players = {};
         private Transform target;
-        private GameEventListener playerLoadedListener;
         
         private enum EnemyState
         {
