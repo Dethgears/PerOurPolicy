@@ -1,10 +1,12 @@
+using System;
+using Core.Events;
 using Game.Pickup;
 using Game.Shop;
 using Menu;
 using Player.Input;
-using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 namespace Player
@@ -34,6 +36,7 @@ namespace Player
         private PlayerInput _playerInput;
         private CharacterController _cc;
         private Transform _cameraTransform;
+        private Animator _animator;
 
         private InputAction _moveAction;
         private InputAction _lookAction;
@@ -51,13 +54,17 @@ namespace Player
         private bool canInteract;
         private GameObject currentInteractable;
         
+        public int movementState = 0;
+        
         private const float Gravity = -9.81f;
+        private static readonly int MovementStateId = Animator.StringToHash("MoveState");
 
         private void Awake()
         {
             _playerInput = GetComponent<PlayerInput>();
             _cc = GetComponent<CharacterController>();
-            _cameraTransform = transform.GetChild(0);
+            _cameraTransform = transform.Find("Armature/root/spine.001/spine.002/spine.003/spine.004/spine.005/head/Camera");
+            _animator = GetComponent<Animator>();
         }
 
         public override void OnNetworkSpawn()
@@ -110,6 +117,8 @@ namespace Player
         private void Update()
         {
             if (!IsOwner) return;
+            
+            _animator.SetInteger(MovementStateId, movementState);
 
             ProcessLook();
             ProcessMove();

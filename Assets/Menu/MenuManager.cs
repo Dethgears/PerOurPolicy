@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using Core;
+using Game;
 using Menu.Menus;
 using UI;
 using UnityEngine;
+using UnityEngine.XR;
 
 namespace Menu
 {
@@ -22,6 +24,7 @@ namespace Menu
         private void Start()
         {
             OpenMainMenu();
+            GameManager.Instance.OnStateChanged += HandleStateChanged;
         }
 
         // Open a menu and record it in history
@@ -53,6 +56,18 @@ namespace Menu
         {
             _currentMenu?.Close();
             _history.Clear();
+        }
+        
+        /// <summary>Fires locally once THIS client (host or joiner) has actually finished loading into the gameplay scene - see NetworkSessionManager.OnLocalClientEnteredGame.</summary>
+        private void HandleStateChanged(GameState oldState, GameState newState)
+        {
+            if (newState != GameState.Playing) return;
+            
+            CloseMenu();
+
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            ShowHUD();
         }
  
         // Convenience accessors

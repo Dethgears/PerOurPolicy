@@ -1,5 +1,9 @@
+using Core.Events;
+using Network;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Events;
+using Random = UnityEngine.Random;
 
 namespace Enemy
 {
@@ -10,13 +14,14 @@ namespace Enemy
         [SerializeField] private float maxStateTime = 2f;
 
         [Header("Detection")]
-        [SerializeField] private float sightRange = 10f;
+        [SerializeField] private float sightRange = 100f;
         [SerializeField] private float sightAngle = 90f;
         [SerializeField] private float loseTargetTime = 3f;
-
-        [Header("Target")]
-        [SerializeField] private Transform player;
-
+        
+        private GameObject[] players = {};
+        private Transform target;
+        private GameEventListener playerLoadedListener;
+        
         private enum EnemyState
         {
             Idle,
@@ -39,31 +44,42 @@ namespace Enemy
         private void Start()
         {
             ChangeState();
+            UpdatePlayers();
+            Component.FindAnyObjectByType<PlayerSpawner>().OnPlayerSpawned.AddListener(UpdatePlayers);
+        }
+        
+        private void OnDestroy()
+        {
+            if (NetworkSessionManager.Instance != null)
+            {
+                FindAnyObjectByType<PlayerSpawner>().OnPlayerSpawned.RemoveListener(UpdatePlayers);
+            }
         }
 
         private void Update()
         {
             UpdateDetection();
-
-            if (state == EnemyState.Running && player != null)
+            
+            if (state == EnemyState.Running && target != null)
             {
-                agent.SetDestination(player.position);
+                agent.SetDestination(target.position);
             }
 
             timeInState += Time.deltaTime;
-
-            if (state != EnemyState.Running &&
-                timeInState >= stateTime)
+            
+            switch (state)
             {
-                ChangeState();
+                case EnemyState.Idle:
+                    if (timeInState >= stateTime/4) ChangeState();
+                    break;
+                case EnemyState.Walking:
+                    if (timeInState >= stateTime) ChangeState();
+                    break;
             }
         }
 
         private void UpdateDetection()
         {
-            if (player == null)
-                return;
-
             if (CanSeePlayer())
             {
                 timeSincePlayerSeen = 0f;
@@ -82,30 +98,47 @@ namespace Enemy
 
         private bool CanSeePlayer()
         {
-            Vector3 direction = player.position - transform.position;
-            float distance = direction.magnitude;
+            var foundPlayers = new System.Collections.Generic.List<Transform>();
+            
+            if (players.Length == 0) return false;
 
-            if (distance > sightRange)
-                return false;
-
-            direction.y = 0f;
-
-            if (Vector3.Angle(transform.forward, direction) >
-                sightAngle * 0.5f)
+            foreach (var player in players)
             {
-                return false;
+                Vector3 direction = player.transform.position - transform.position;
+                float distance = direction.magnitude;
+
+                if (distance > sightRange)
+                    continue;
+
+                direction.y = 0f;
+
+                if (Vector3.Angle(transform.forward, direction) > sightAngle * 0.5f)
+                    continue;
+
+                Vector3 rayOrigin = transform.position + Vector3.up;
+                Vector3 rayDirection = player.transform.position - rayOrigin;
+
+                if (Physics.Raycast(
+                        rayOrigin,
+                        rayDirection,
+                        out RaycastHit hit,
+                        sightRange))
+                {
+                    if (hit.transform == player.transform)
+                    {
+                        foundPlayers.Add(player.transform);
+                    }
+                }
             }
 
-            if (Physics.Raycast(
-                    transform.position + Vector3.up,
-                    player.position - (transform.position + Vector3.up),
-                    out RaycastHit hit,
-                    sightRange))
-            {
-                return hit.transform == player;
-            }
+            if (foundPlayers.Count == 0)
+                return false;
 
-            return false;
+            if (foundPlayers.Contains(target))
+                return true;
+
+            target = foundPlayers[Random.Range(0, foundPlayers.Count)];
+            return true;
         }
 
         private void ChangeState()
@@ -154,6 +187,11 @@ namespace Enemy
                 agent.speed = 5f;
                 agent.SetDestination(hit.position);
             }
+        }
+
+        public void UpdatePlayers()
+        {
+            players = GameObject.FindGameObjectsWithTag("Player");
         }
     }
 }

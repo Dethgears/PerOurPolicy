@@ -67,12 +67,19 @@ namespace Player
             if (isSprinting)
             {
                 CurrentStamina -= sprintDrain * Time.deltaTime;
+                playerController.movementState = 2;
             }
-
-            if (!isMoving)
+            else
             {
                 CurrentStamina += staminaRegen * Time.deltaTime;
             }
+
+            if (!isSprinting && isMoving)
+            {
+                playerController.movementState = 1;
+            }
+            
+            if (!isMoving) playerController.movementState = 0;
 
             CurrentStamina =
                 Mathf.Clamp(CurrentStamina, 0, maxStamina);

@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 1977415219357842456}
   - component: {fileID: 5757784230346568745}
   - component: {fileID: 2496348466472256974}
+  - component: {fileID: 6687702647690141950}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -130,13 +131,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1685338155
+  GlobalObjectIdHash: 1138943931
   InScenePlacedSourceGlobalObjectIdHash: 3261121590
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
-  m_InScenePlaced: 1
+  m_InScenePlaced: 0
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
@@ -202,9 +203,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c4acba248c7ae343a785c883648f53b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  moveSpeed: 5
   minStateTime: 0.5
   maxStateTime: 2
+  sightRange: 10
+  sightAngle: 90
+  loseTargetTime: 3
 --- !u!195 &2496348466472256974
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -227,3 +230,31 @@ NavMeshAgent:
   m_BaseOffset: 1
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &6687702647690141950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4817150941167260758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d6ae529ac6db584aacb49fbb5d36ba9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.Events.GameEventListener
+  event: {fileID: 11400000, guid: 72647b615267f334d9afa578cac399f3, type: 2}
+  response:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 5757784230346568745}
+        m_TargetAssemblyTypeName: Enemy.EnemyController, Assembly-CSharp
+        m_MethodName: UpdatePlayers
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2

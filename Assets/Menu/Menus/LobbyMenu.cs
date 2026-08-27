@@ -38,7 +38,7 @@ namespace Menu.Menus
         [SerializeField] private TMP_Text playerListRowPrefab;
         [SerializeField] private Button startGameButton;
         [SerializeField] private Button leaveButton;
-        [SerializeField] private string gameplaySceneName = "DefaultScene";
+        [SerializeField] private string gameplaySceneName = "Facility";
 
         private readonly List<SessionListItemView> _spawnedListItems = new();
         private readonly List<TMP_Text> _spawnedPlayerRows = new();
@@ -62,6 +62,16 @@ namespace Menu.Menus
             NetworkSessionManager.Instance.OnSessionError += ShowStatus;
             NetworkSessionManager.Instance.OnLocalClientEnteredGame += HandleLocalClientEnteredGame;
 
+            // Safety net for the race this menu used to lose: if the scene load already
+            // completed (host started fast) before this Open() call ran, the event above
+            // already fired and this subscription missed it. Catch up immediately instead
+            // of sitting there forever waiting for an event that's never coming again.
+            if (NetworkSessionManager.Instance.HasEnteredGame)
+            {
+                HandleLocalClientEnteredGame();
+                return;
+            }
+
             RefreshForCurrentSessionState();
             if (!NetworkSessionManager.Instance.IsInSession) RefreshSessionList();
         }
@@ -73,14 +83,14 @@ namespace Menu.Menus
             NetworkSessionManager.Instance.OnSessionLeft -= HandleSessionLeft;
             NetworkSessionManager.Instance.OnSessionPlayersChanged -= RefreshPlayerList;
             NetworkSessionManager.Instance.OnSessionError -= ShowStatus;
-            NetworkSessionManager.Instance.OnLocalClientEnteredGame -= HandleLocalClientEnteredGame;
+            //NetworkSessionManager.Instance.OnLocalClientEnteredGame -= HandleLocalClientEnteredGame;
         }
 
         /// <summary>Fires locally once THIS client (host or joiner) has actually finished loading into the gameplay scene - see NetworkSessionManager.OnLocalClientEnteredGame.</summary>
         private void HandleLocalClientEnteredGame()
         {
             MenuManager.Instance.CloseMenu();
-            
+
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             MenuManager.Instance.ShowHUD();
@@ -89,8 +99,8 @@ namespace Menu.Menus
         private async void OnCreateClicked()
         {
             SetButtonsInteractable(false);
-            string name = string.IsNullOrWhiteSpace(sessionNameField.text) ? null : sessionNameField.text;
-            await NetworkSessionManager.Instance.CreateSessionAsync(name);
+            string sessionName = string.IsNullOrWhiteSpace(sessionNameField.text) ? null : sessionNameField.text;
+            await NetworkSessionManager.Instance.CreateSessionAsync(sessionName);
             SetButtonsInteractable(true);
         }
 
@@ -169,7 +179,7 @@ namespace Menu.Menus
             foreach (var player in session.Players)
             {
                 var row = Instantiate(playerListRowPrefab, playerListContent);
-                row.text = player.Id == session.CurrentPlayer.Id ? "You" : player.Id;
+                row.text = player.Id == session.CurrentPlayer.Id ? $"{player.Id} (You)" : player.Id;
                 _spawnedPlayerRows.Add(row);
             }
         }

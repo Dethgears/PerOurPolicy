@@ -3994,7 +3994,7 @@ MonoBehaviour:
   playerListRowPrefab: {fileID: 4172734469438877304, guid: 898f204299bee1943bcd256fe8fddb19, type: 3}
   startGameButton: {fileID: 4171792060948449708}
   leaveButton: {fileID: 524347046110266950}
-  gameplaySceneName: DefaultScene
+  gameplaySceneName: Facility
 --- !u!1 &6826883327666512151
 GameObject:
   m_ObjectHideFlags: 0
