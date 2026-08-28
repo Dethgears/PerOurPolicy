@@ -57,7 +57,8 @@ namespace Player
         private GameObject currentInteractable;
         
         public int movementState = 0;
-        
+        public bool isAlive;
+
         private const float Gravity = -9.81f;
         private static readonly int MovementStateId = Animator.StringToHash("MoveState");
 
@@ -80,7 +81,6 @@ namespace Player
 
             if (IsOwner)
             {
-                _playerInput.enabled = false;
                 foreach (var item in remoteObjects)
                 {
                     if (item != null) item.SetActive(false);
@@ -270,9 +270,28 @@ namespace Player
             return true;
         }
         
-        public void OnDeath()
+        [Rpc(SendTo.Everyone)]
+        public void OnDeathClientRpc()
         {
             // todo: ragdoll player, add Pickup component but keep ragdolling when picked up
+            
+            isAlive = false;
+            gameObject.tag = "Untagged";
+            gameObject.layer = LayerMask.NameToLayer("Interactable");
+            
+            if (!IsOwner) return;
+            
+            _playerInput.enabled = false;
+            
+            // Spectate
+            foreach (var player in GameObject.FindGameObjectsWithTag("Player"))
+            {
+                var pc = player.GetComponent<PlayerController>();
+                
+                if (!pc.isAlive) return;
+                pc._cameraTransform.gameObject.SetActive(true);
+                _cameraTransform.gameObject.SetActive(false);
+            }
         }
     }
 }

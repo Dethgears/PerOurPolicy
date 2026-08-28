@@ -198,16 +198,20 @@ namespace Enemy
         public void UpdatePlayers()
         {
             players = GameObject.FindGameObjectsWithTag("Player");
-
-            Debug.Log("Found " + players.Length + " players");
         }
 
-        public void OnCollisionEnter(Collision collision)
+        private void OnCollisionEnter(Collision collision)
         {
-            if (collision.gameObject.CompareTag("Player"))
-            {
-                collision.gameObject.GetComponent<PlayerController>().OnDeath();
-            }
+            Debug.Log("Collision entered");
+            
+            if (!IsServer) return;
+            if (!collision.gameObject.CompareTag("Player")) return;
+            
+            Debug.Log("Player killed");
+                
+            collision.gameObject.GetComponent<PlayerController>().OnDeathClientRpc();
+            UpdatePlayers();
+            ChangeState();
         }
     }
 }
