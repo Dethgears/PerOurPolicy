@@ -89,6 +89,13 @@ namespace Player
             else
             {
                 _playerInput.enabled = false;
+                foreach (var audioListener in FindObjectsByType<AudioListener>())
+                {
+                    if (audioListener.transform.root != transform)
+                    {
+                        audioListener.enabled = false;
+                    }
+                }
                 foreach (var item in localObjects)
                 {
                     if (item != null) item.SetActive(false);
@@ -274,6 +281,7 @@ namespace Player
         public void OnDeathClientRpc()
         {
             // todo: ragdoll player, add Pickup component but keep ragdolling when picked up
+            // the current code should turn off input and make player spectate
             
             isAlive = false;
             gameObject.tag = "Untagged";

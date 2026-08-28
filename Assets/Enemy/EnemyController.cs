@@ -202,13 +202,12 @@ namespace Enemy
 
         private void OnCollisionEnter(Collision collision)
         {
-            Debug.Log("Collision entered");
-            
             if (!IsServer) return;
             if (!collision.gameObject.CompareTag("Player")) return;
             
             Debug.Log("Player killed");
-                
+            
+            // Send to player and find new target
             collision.gameObject.GetComponent<PlayerController>().OnDeathClientRpc();
             UpdatePlayers();
             ChangeState();
