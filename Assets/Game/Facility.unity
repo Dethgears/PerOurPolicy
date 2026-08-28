@@ -1777,6 +1777,26 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 1016927747
       objectReference: {fileID: 0}
+    - target: {fileID: 5554457864730310064, guid: 873fea80ef806ad43ad2bdb474b0f3fa, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 1995709010
+      objectReference: {fileID: 0}
+    - target: {fileID: 6935683589976411926, guid: 873fea80ef806ad43ad2bdb474b0f3fa, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6935683589976411926, guid: 873fea80ef806ad43ad2bdb474b0f3fa, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 495671439
+      objectReference: {fileID: 0}
+    - target: {fileID: 6935683589976411926, guid: 873fea80ef806ad43ad2bdb474b0f3fa, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6935683589976411926, guid: 873fea80ef806ad43ad2bdb474b0f3fa, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 1995709010
+      objectReference: {fileID: 0}
     - target: {fileID: 7479418882467583201, guid: 873fea80ef806ad43ad2bdb474b0f3fa, type: 3}
       propertyPath: m_Name
       value: Ship

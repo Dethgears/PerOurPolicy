@@ -1,9 +1,9 @@
-using Core.Events;
+using System;
 using Network;
+using Player;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.Events;
 using Random = UnityEngine.Random;
 
 namespace Enemy
@@ -200,6 +200,14 @@ namespace Enemy
             players = GameObject.FindGameObjectsWithTag("Player");
 
             Debug.Log("Found " + players.Length + " players");
+        }
+
+        public void OnCollisionEnter(Collision collision)
+        {
+            if (collision.gameObject.CompareTag("Player"))
+            {
+                collision.gameObject.GetComponent<PlayerController>().OnDeath();
+            }
         }
     }
 }

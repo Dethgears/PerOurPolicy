@@ -1,5 +1,3 @@
-using System;
-using Core.Events;
 using Game.Pickup;
 using Game.Ship;
 using Game.Shop;
@@ -7,9 +5,7 @@ using Menu;
 using Player.Input;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 
 namespace Player
 {
@@ -32,8 +28,12 @@ namespace Player
         [SerializeField] public float interactDistance = 2f;
         
         [Header("Local-Only References")]
-        [Tooltip("Disabled automatically on remote (non-owner) player instances.")]
+        [Tooltip("Disabled automatically on remote player instances (ex. Camera, AudioManager).")]
         [SerializeField] private GameObject[] localObjects;
+        
+        [Header("Remote-Only References")]
+        [Tooltip("Disabled automatically on local (owner) player instances (ex. Mesh for first-person character).")]
+        [SerializeField] private GameObject[] remoteObjects;
         
         private PlayerInput _playerInput;
         private CharacterController _cc;
@@ -78,7 +78,15 @@ namespace Player
             _jumpAction = _playerInput.actions["Player/Jump"];
             _interactAction = _playerInput.actions["Player/Interact"];
 
-            if (!IsOwner)
+            if (IsOwner)
+            {
+                _playerInput.enabled = false;
+                foreach (var item in remoteObjects)
+                {
+                    if (item != null) item.SetActive(false);
+                }
+            }
+            else
             {
                 _playerInput.enabled = false;
                 foreach (var item in localObjects)
@@ -162,7 +170,6 @@ namespace Player
 
         private void CheckCursor()
         {
-            // Define the layer mask to exclude the "Ignore Raycast" layer (Layer 2)
             int layerMask = LayerMask.GetMask("Interactable");
             var isHit = Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out var hit, interactDistance, layerMask);
             
@@ -202,7 +209,7 @@ namespace Player
             RequestInteractServerRpc(targetId, hasTarget);
         }
 
-        [ServerRpc]
+        [Rpc(SendTo.Server)]
         private void RequestInteractServerRpc(ulong targetNetworkObjectId, bool hasTarget)
         {
             NetworkObject target = null;
@@ -242,8 +249,7 @@ namespace Player
             
             if (target.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = true;
             if (target.TryGetComponent<Collider>(out var col)) col.isTrigger = true;
-            //if (target.TryGetComponent<NetworkTransform>(out var nt)) nt.enabled = false;
-
+            
             return true;
         }
         
@@ -257,12 +263,16 @@ namespace Player
 
             if (target.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = false;
             if (target.TryGetComponent<Collider>(out var col)) col.isTrigger = false;
-            //if (target.TryGetComponent<NetworkTransform>(out var nt)) nt.enabled = true;
-
+            
             if (left) _leftHand = null;
             else _rightHand = null;
 
             return true;
+        }
+        
+        public void OnDeath()
+        {
+            // todo: ragdoll player, add Pickup component but keep ragdolling when picked up
         }
     }
 }

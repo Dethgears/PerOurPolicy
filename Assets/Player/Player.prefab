@@ -310,7 +310,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2976146503
+  GlobalObjectIdHash: 813799720
   InScenePlacedSourceGlobalObjectIdHash: 3693469998
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -371,6 +371,7 @@ MonoBehaviour:
   interactDistance: 2
   localObjects:
   - {fileID: 3738987581989633252}
+  remoteObjects: []
   movementState: 0
 --- !u!114 &5415733446148287454
 MonoBehaviour:
