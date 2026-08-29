@@ -81,6 +81,21 @@ namespace Menu
         {
             hud.GetComponent<CanvasGroup>().alpha = 1;
         }
+        
+        public void SetObjectiveText(string text)
+        {
+            hud.SetObjectiveText(text);
+        }
+        
+        public void SetSpecialOfferText(string text)
+        {
+            hud.SetSpecialOfferText(text);
+        }
+
+        public void SetStatusText(string text)
+        {
+            hud.SetStatusText(text);
+        }
 
         public void SetCursorText(string text)
         {

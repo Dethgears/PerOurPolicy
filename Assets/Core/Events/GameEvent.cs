@@ -9,7 +9,7 @@ namespace Core.Events
         private readonly List<GameEventListener> _listeners = new();
  
         public void Raise()
-        {
+        { 
             // Iterate backwards: listeners may remove themselves on response
             for (int i = _listeners.Count - 1; i >= 0; i--)
                 _listeners[i].OnEventRaised();

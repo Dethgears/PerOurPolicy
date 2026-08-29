@@ -1,5 +1,4 @@
-using System;
-using Network;
+using Core.Events;
 using Player;
 using Unity.Netcode;
 using UnityEngine;
@@ -7,7 +6,8 @@ using UnityEngine.AI;
 using Random = UnityEngine.Random;
 
 namespace Enemy
-{
+{ 
+    [RequireComponent(typeof(NavMeshAgent))]
     public class EnemyController : NetworkBehaviour
     {
         [Header("Movement")]
@@ -36,34 +36,20 @@ namespace Enemy
         private float stateTime;
         private float timeSincePlayerSeen;
 
-        private void Awake()
-        {
-            agent = GetComponent<NavMeshAgent>();
-        }
-
         public override void OnNetworkSpawn()
         {
             if (!IsServer) return;
             
+            agent = GetComponent<NavMeshAgent>();
+            
             ChangeState();
             UpdatePlayers();
-            var spawner = FindAnyObjectByType<PlayerSpawner>();
-            if (spawner != null) spawner.OnPlayerSpawned.AddListener(UpdatePlayers);
-        }
-        
-        public override void OnDestroy()
-        {
-            if (!IsServer) return;
-            
-            if (NetworkSessionManager.Instance != null)
-            {
-                var spawner = FindAnyObjectByType<PlayerSpawner>();
-                if (spawner != null) spawner.OnPlayerSpawned.RemoveListener(UpdatePlayers);
-            }
         }
 
         private void Update()
         {
+            if (!IsServer) return;
+            
             UpdateDetection();
             
             if (state == EnemyState.Running && target != null)
@@ -197,6 +183,7 @@ namespace Enemy
 
         public void UpdatePlayers()
         {
+            Debug.Log("Updating players");
             players = GameObject.FindGameObjectsWithTag("Player");
         }
 

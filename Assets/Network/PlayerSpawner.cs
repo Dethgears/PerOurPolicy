@@ -1,6 +1,7 @@
+using Core.Events;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Network
 {
@@ -11,14 +12,13 @@ namespace Network
     ///               Connection Approval left off. 
     /// PUBLIC API: none - runs automatically once the scene loads.
     /// </summary>
-    public class PlayerSpawner : MonoBehaviour
+    public class PlayerSpawner : NetworkBehaviour
     {
         [SerializeField] private NetworkObject playerPrefab;
-        public UnityEvent OnPlayerSpawned;
-
+        
         private void Start()
         {
-            if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+            if (NetworkManager.Singleton == null || !IsServer)
                 return;
 
             SpawnAllConnectedPlayers();
@@ -27,7 +27,7 @@ namespace Network
             NetworkManager.Singleton.OnClientConnectedCallback += SpawnPlayer;
         }
 
-        private void OnDestroy()
+        public override void OnDestroy()
         {
             if (NetworkManager.Singleton != null)
                 NetworkManager.Singleton.OnClientConnectedCallback -= SpawnPlayer;
@@ -53,7 +53,6 @@ namespace Network
             Transform spawnPoint = GetSpawnPointFor(clientId);
             NetworkObject instance = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
             instance.SpawnAsPlayerObject(clientId);
-            OnPlayerSpawned?.Invoke();
         }
 
         /// <summary>Assigns spawn points by connection order, wrapping around if there are more players than points.</summary>

@@ -1,3 +1,4 @@
+using Core.Events;
 using Game.Pickup;
 using Game.Ship;
 using Game.Shop;
@@ -23,6 +24,7 @@ namespace Player
         [SerializeField] public float moveSpeed = 5f;
         [SerializeField] private float jumpHeight = 1f;
         [SerializeField] private float airControl = 1f;
+        [SerializeField] private float gravity = -15f;
 
         [Header("Interact")]
         [SerializeField] public float interactDistance = 2f;
@@ -34,6 +36,11 @@ namespace Player
         [Header("Remote-Only References")]
         [Tooltip("Disabled automatically on local (owner) player instances (ex. Mesh for first-person character).")]
         [SerializeField] private GameObject[] remoteObjects;
+        
+        [Header("Events")]
+        [SerializeField] private GameEvent onPlayerSpawned;
+        [SerializeField] private GameEvent onPlayerDied;
+        [SerializeField] private GameEvent onPickup;
         
         private PlayerInput _playerInput;
         private CharacterController _cc;
@@ -49,18 +56,19 @@ namespace Player
         private float verticalVelocity;
         private Vector3 horizontalVelocity;
 
-        private Vector3 _carryOffset = new Vector3(.5f, 1, .25f);
+        private readonly Vector3 _carryOffset = new Vector3(.5f, 1, .25f);
         private NetworkObject _leftHand;
         private NetworkObject _rightHand;
 
         private bool canInteract;
         private GameObject currentInteractable;
         
-        public int movementState = 0;
-        public bool isAlive;
-
-        private const float Gravity = -9.81f;
+        [HideInInspector] public int movementState;
+        [HideInInspector] public NetworkVariable<bool> isAlive = new NetworkVariable<bool>(true);
+        
         private static readonly int MovementStateId = Animator.StringToHash("MoveState");
+
+        private PlayerController spectatePlayer;
 
         private void Awake()
         {
@@ -78,6 +86,8 @@ namespace Player
             _lookAction = _playerInput.actions["Player/Look"];
             _jumpAction = _playerInput.actions["Player/Jump"];
             _interactAction = _playerInput.actions["Player/Interact"];
+
+            if (IsServer) onPlayerSpawned?.Raise();
 
             if (IsOwner)
             {
@@ -136,7 +146,7 @@ namespace Player
             if (!IsOwner) return;
             
             _animator.SetInteger(MovementStateId, movementState);
-
+            
             ProcessLook();
             ProcessMove();
             CheckCursor();
@@ -167,7 +177,7 @@ namespace Player
             }
             else
             {
-                verticalVelocity += Gravity * Time.deltaTime;
+                verticalVelocity += gravity * Time.deltaTime;
                 var targetVelocity = moveDirection * moveSpeed;
                 horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, targetVelocity, airControl * Time.deltaTime);
             }
@@ -196,7 +206,7 @@ namespace Player
         {
             if (!_cc.isGrounded) return;
 
-            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * Gravity);
+            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
 
         // --- Interact / pickup: server-authoritative so hand-state can't desync between clients ---
@@ -257,6 +267,7 @@ namespace Player
             if (target.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = true;
             if (target.TryGetComponent<Collider>(out var col)) col.isTrigger = true;
             
+            onPickup.Raise();
             return true;
         }
         
@@ -266,7 +277,7 @@ namespace Player
             var target = left ? _leftHand : _rightHand;
             if (target == null) return false;
 
-            target.TrySetParent((NetworkObject)null, true);
+            target.TrySetParent((NetworkObject)null);
 
             if (target.TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = false;
             if (target.TryGetComponent<Collider>(out var col)) col.isTrigger = false;
@@ -283,23 +294,43 @@ namespace Player
             // todo: ragdoll player, add Pickup component but keep ragdolling when picked up
             // the current code should turn off input and make player spectate
             
-            isAlive = false;
+            if (IsServer) onPlayerDied?.Raise();
+            
+            isAlive.Value = false;
             gameObject.tag = "Untagged";
             gameObject.layer = LayerMask.NameToLayer("Interactable");
             
             if (!IsOwner) return;
             
             _playerInput.enabled = false;
-            
+            FindPlayerToSpectate();
+        }
+
+        private void FindPlayerToSpectate()
+        {
             // Spectate
             foreach (var player in GameObject.FindGameObjectsWithTag("Player"))
             {
-                var pc = player.GetComponent<PlayerController>();
+                spectatePlayer = player.GetComponent<PlayerController>();
                 
-                if (!pc.isAlive) return;
-                pc._cameraTransform.gameObject.SetActive(true);
-                _cameraTransform.gameObject.SetActive(false);
+                if (!spectatePlayer.isAlive.Value) return;
+                
+                spectatePlayer._cameraTransform.gameObject.SetActive(true);
+                _cameraTransform.gameObject.SetActive(false); 
+                if (spectatePlayer.remoteObjects[0]) spectatePlayer.remoteObjects[0].SetActive(false); // Hide other
+                if (remoteObjects[0]) remoteObjects[0].SetActive(true); // Show self
+                
+                return;
             }
+
+            Debug.Log("No spectate player found");
+        }
+        
+        public void CheckSpectating()
+        {
+            if (spectatePlayer == null) return;
+            
+            if (!spectatePlayer.isAlive.Value) FindPlayerToSpectate();
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Game
         public bool IsPaused => _pauseSources.Count > 0;
 
         public int money = 0;
-        public int quota = 100;
+        public int quota = 200;
         public int roundDeaths = 0;
 
         private readonly HashSet<object> _pauseSources = new();
