@@ -5,6 +5,7 @@ using Game.Shop;
 using Menu;
 using Player.Input;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -167,6 +168,8 @@ namespace Player
 
         private void ProcessMove()
         {
+            if (!isAlive.Value) return;
+            
             Vector2 moveInput = _moveAction.ReadValue<Vector2>();
             Vector3 moveDirection = transform.forward * moveInput.y + transform.right * moveInput.x;
 
@@ -288,22 +291,30 @@ namespace Player
             return true;
         }
         
-        [Rpc(SendTo.Everyone)]
-        public void OnDeathClientRpc()
+        [Rpc(SendTo.Server)]
+        public void OnDeathServerRpc()
         {
-            // todo: ragdoll player, add Pickup component but keep ragdolling when picked up
-            // the current code should turn off input and make player spectate
-            
-            if (IsServer) onPlayerDied?.Raise();
-            
+            onPlayerDied?.Raise();
             isAlive.Value = false;
-            gameObject.tag = "Untagged";
-            gameObject.layer = LayerMask.NameToLayer("Interactable");
             
-            if (!IsOwner) return;
+            var obj = Instantiate(Resources.Load<GameObject>("Player/PlayerPickup"), transform.position, transform.rotation);
+            obj.GetComponent<NetworkObject>().Spawn();
             
-            _playerInput.enabled = false;
-            FindPlayerToSpectate();
+            OnDeathClientRpc();
+        }
+
+        [Rpc(SendTo.Everyone)]
+        private void OnDeathClientRpc()
+        {
+            gameObject.tag = "Untagged"; 
+            GetComponent<CapsuleCollider>().enabled = false;
+            if (remoteObjects[0] != null) remoteObjects[0].SetActive(false);
+            
+            if (IsOwner)
+            {
+                _playerInput.enabled = false;
+                FindPlayerToSpectate();
+            }
         }
 
         private void FindPlayerToSpectate()

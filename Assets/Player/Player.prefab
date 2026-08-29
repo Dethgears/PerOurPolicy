@@ -2031,7 +2031,7 @@ MonoBehaviour:
   localObjects:
   - {fileID: 3738987581989633252}
   remoteObjects:
-  - {fileID: 0}
+  - {fileID: 7089878179323863267}
   onPlayerSpawned: {fileID: 11400000, guid: 0065b034bf3475e42bdef99aec9157de, type: 2}
   onPlayerDied: {fileID: 11400000, guid: 6b8626687d8defd4a89580f55495506f, type: 2}
   onPickup: {fileID: 11400000, guid: 971c05501e27ad34aa99cd66c3586600, type: 2}

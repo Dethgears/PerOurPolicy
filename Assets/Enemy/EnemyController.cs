@@ -195,7 +195,7 @@ namespace Enemy
             Debug.Log("Player killed");
             
             // Send to player and find new target
-            collision.gameObject.GetComponent<PlayerController>().OnDeathClientRpc();
+            collision.gameObject.GetComponent<PlayerController>().OnDeathServerRpc();
             UpdatePlayers();
             ChangeState();
         }
