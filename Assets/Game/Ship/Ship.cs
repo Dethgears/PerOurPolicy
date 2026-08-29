@@ -21,8 +21,9 @@ namespace Game.Ship
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
         {
-            if (!IsServer) return;
             DontDestroyOnLoad(this);
+            
+            if (!IsServer) return;
             NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnSceneLoaded;
         }
 
@@ -96,6 +97,7 @@ namespace Game.Ship
         public void OnBeginTeleport()
         {
             if (!IsServer) return;
+            
             foreach (var item in carriedItems)
             {
                 item.parent = transform; // To survive scene transition
